@@ -1,0 +1,50 @@
+services:
+  # Event Bus (Rabbit MQ)
+  rabbitmq:
+    image: 'rabbitmq:3.13-management'
+    ports:
+      - '5672:5672' # RabbitMQ standard port
+      - '15672:15672' # RabbitMQ management plugin port
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    container_name: 'rabbitmq'
+    profiles: ['application']
+    restart: always
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # Setup Rabbit MQ queues
+  terraform:
+    image: hashicorp/terraform:1.11.4
+    working_dir: /terraform
+    volumes:
+      - ./:/terraform
+    environment:
+      TF_VAR_rabbitmq_endpoint: "http://guest:guest@rabbitmq:15672"
+      TF_VAR_rabbitmq_username: "guest"
+      TF_VAR_rabbitmq_password: "guest"
+      # TF_LOG: "INFO"
+    entrypoint: |
+      /bin/sh -c "
+        # Install curl
+        apk add --no-cache curl
+
+        echo 'Waiting for RabbitMQ to be healthy...'
+        while ! curl -f -u guest:guest http://rabbitmq:15672/api/health/checks/alarms; do
+          echo 'RabbitMQ not ready yet, retrying...'
+          sleep 2
+        done
+        echo 'RabbitMQ is healthy, starting Terraform...'
+
+        cd environments/local
+        terraform fmt
+        terraform init
+        terraform plan -out=tfplan
+        terraform apply 'tfplan'
+      "
+    depends_on:
+      - rabbitmq

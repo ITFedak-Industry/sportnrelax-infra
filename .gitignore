@@ -1,0 +1,20 @@
+# Terraform state and cache
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# Sensitive variable files
+*.tfvars
+*.tfvars.json
+
+# Terraform plan files
+*.tfplan
+
+# Crash logs
+crash.log
+
+# Optional override files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
