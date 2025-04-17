@@ -1,6 +1,7 @@
 locals {
   # Number of retries
   retry = 9
+  ttl = 5000
 
   app = "catalog"
   events = ["session.created", "session.canceled"]  # Array of events
@@ -18,6 +19,7 @@ locals {
             source      = "${basename}.queue"
             routing_key  = "${basename}.retry1"
             destination = "${basename}.retry1"
+            ttl = local.ttl
           }
         ],
 
@@ -27,6 +29,7 @@ locals {
             source      = "${basename}.retry${i}"
             routing_key  = "${basename}.retry${i+1}"
             destination = "${basename}.retry${i+1}"
+            ttl = i * local.ttl
           }
         ],
 
@@ -36,6 +39,7 @@ locals {
             source      = "${basename}.retry${local.retry}"
             routing_key  = "${basename}.dlq"
             destination = "${basename}.dlq"
+            ttl = local.retry * local.ttl
           }
         ]
       ])
@@ -53,10 +57,11 @@ resource "rabbitmq_queue" "catalog_queues" {
   settings {
     durable     = true
     auto_delete = false
-    arguments = {
+    arguments_json = jsonencode({
       "x-dead-letter-exchange" = rabbitmq_exchange.session_exchange.name
       "x-dead-letter-routing-key" = each.value.routing_key
-    }
+      "x-message-ttl"             = each.value.ttl
+    })
   }
 }
 
