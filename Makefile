@@ -1,9 +1,9 @@
-start: ## Start the application (pnpm) in dev mode
+local: ## Start the application (pnpm) in dev mode
 	@echo 'Starting containers'
 	docker compose \
 		--profile application \
 		--project-name infrastructure \
-		-f ./docker-compose.yml \
+		-f ./environments/local/docker-compose.yml \
 		up -d
 
 	@echo 'Container IDs and Names:'

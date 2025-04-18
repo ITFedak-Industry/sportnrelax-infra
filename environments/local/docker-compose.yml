@@ -10,11 +10,8 @@ services:
       RABBITMQ_DEFAULT_PASS: guest
     container_name: 'rabbitmq'
     restart: always
-    healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
+    networks:
+      - shared-infra
 
   # Setup Rabbit MQ queues
   terraform:
@@ -48,3 +45,9 @@ services:
       "
     depends_on:
       - rabbitmq
+    networks:
+      - shared-infra
+
+networks:
+  shared-infra:
+    external: true
