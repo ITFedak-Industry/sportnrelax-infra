@@ -3,9 +3,7 @@ locals {
   retry = 9
   ttl = 5000
 
-  app = "catalog"
-  events = ["session.created", "session.canceled"]  # Array of events
-  basenames = [for event in local.events: "${local.app}.${event}"]
+  basenames = [for event in var.events: "${var.app}.${event}"]
 
   config = {
     for basename in local.basenames : basename => {
